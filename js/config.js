@@ -8,6 +8,6 @@
  * database only lets it call the four functions in schema.sql.
  */
 window.FIND_AIRCRAFT_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://ydsdgtkjwflvqpfnmjso.supabase.co',
+  supabaseAnonKey: 'sb_publishable_tiPFoFZQ3SiCIFm_3csykA_HJWyOHXZ',
 };

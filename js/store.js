@@ -199,6 +199,21 @@
       ? supabaseBackend(config.supabaseUrl, config.supabaseAnonKey, options.fetch)
       : localBackend(store, options.crypto);
 
+    /*
+     * A session left over from the other backend cannot be used here. Keep
+     * its best score as a guest best, so it follows the player into the
+     * account they make next, then drop it.
+     */
+    (function retireForeignSession() {
+      const saved = store.get(SESSION_KEY);
+      if (!saved || saved.backend === backend.kind) return;
+      const kept = store.get(GUEST_BEST_KEY);
+      if (Number.isInteger(saved.best) && saved.best > 0 && !(Number.isInteger(kept) && kept <= saved.best)) {
+        store.set(GUEST_BEST_KEY, saved.best);
+      }
+      store.remove(SESSION_KEY);
+    })();
+
     function session() {
       const saved = store.get(SESSION_KEY);
       return saved && saved.backend === backend.kind && saved.name && saved.token ? saved : null;

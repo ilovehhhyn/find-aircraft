@@ -153,3 +153,31 @@ test('a win is kept locally when the leaderboard cannot be reached', async () =>
   assert.equal(store.guestBest(), 20);
   await assert.rejects(store.leaderboard(), code('network'));
 });
+
+test('a best score from a browser-only account survives the switch to Supabase', async () => {
+  const storage = memoryStorage();
+  const before = localStore(storage);
+  await before.signUp('Helen', 'test-pass-1');
+  await before.recordWin(15);
+
+  const calls = [];
+  const fetch = async (url, init) => {
+    const name = url.split('/').pop();
+    calls.push({ name, body: JSON.parse(init.body) });
+    const body = name === 'fa_sign_up' ? { name: 'Helen', token: 'tok-9', best: null } : { name: 'Helen', best: 15 };
+    return { ok: true, status: 200, json: async () => body };
+  };
+  const after = createStore({
+    storage,
+    crypto: globalThis.crypto,
+    fetch,
+    config: { supabaseUrl: 'https://example.test', supabaseAnonKey: 'public-key' },
+  });
+  assert.equal(after.session(), null);
+  assert.equal(after.best(), 15);
+
+  const session = await after.signUp('Helen', 'test-pass-2');
+  assert.equal(session.best, 15);
+  assert.deepEqual(calls[1], { name: 'fa_submit_score', body: { p_token: 'tok-9', p_shots: 15 } });
+  assert.equal(after.guestBest(), null);
+});

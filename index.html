@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Find Aircraft</title>
-  <meta name="description" content="Two aircraft are hidden under the cloud. Find both cockpits in as few shots as you can.">
+  <meta name="description" content="Two aircraft are hidden on the grid. Find both cockpits in as few shots as you can.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     <header class="masthead">
       <div>
         <h1>Find Aircraft</h1>
-        <p class="brief">Two aircraft are hidden under the cloud. Find both cockpits in as few shots as you can.</p>
+        <p class="brief">Two aircraft are hidden on the grid. Find both cockpits in as few shots as you can.</p>
       </div>
       <button type="button" class="new-game" id="new-game">New game</button>
     </header>
@@ -25,7 +25,7 @@
         <div class="field">
           <div class="cols" id="cols" aria-hidden="true"></div>
           <div class="rows" id="rows" aria-hidden="true"></div>
-          <div class="sky" id="sky" role="group" aria-label="Airspace, 10 by 10 squares"></div>
+          <div class="board" id="board" role="group" aria-label="Grid, 10 by 10 squares"></div>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </section>
@@ -53,8 +53,8 @@
         </section>
 
         <ul class="key" aria-label="What the squares mean">
-          <li><span class="swatch swatch-cloud"></span>Cloud, not shot yet</li>
-          <li><span class="swatch swatch-miss"></span>Clear sky, a miss</li>
+          <li><span class="swatch swatch-hidden"></span>Not shot yet</li>
+          <li><span class="swatch swatch-miss"></span>Miss</li>
           <li><span class="swatch swatch-body"></span>Aircraft body</li>
           <li><span class="swatch swatch-head"></span>Cockpit</li>
         </ul>

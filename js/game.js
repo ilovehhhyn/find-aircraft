@@ -143,8 +143,8 @@
    * Take a shot at a square. Returns what happened:
    *   { type: 'ignored' }                      already revealed, or game over
    *   { type: 'miss' | 'body' | 'head', ... }  a counted shot
-   * A cockpit hit also uncovers the rest of that aircraft; those squares are
-   * listed in `uncovered` and do not count as shots.
+   * A cockpit hit reveals only the cockpit. The rest of that aircraft stays
+   * hidden, and shooting its squares still costs shots.
    */
   function shoot(game, r, c) {
     if (game.over || !inBounds(r, c) || game.state[r][c] !== 'hidden') {
@@ -162,17 +162,31 @@
       return { type: 'body', aircraft: plane };
     }
     game.state[r][c] = 'head';
-    const uncovered = [];
-    plane.cells.forEach((cell) => {
-      if (game.state[cell.r][cell.c] !== 'hidden') return;
-      game.state[cell.r][cell.c] = 'body';
-      uncovered.push(cell);
-    });
     plane.found = true;
     game.remaining -= 1;
     game.over = game.remaining === 0;
-    return { type: 'head', aircraft: plane, uncovered, won: game.over };
+    return { type: 'head', aircraft: plane, won: game.over };
   }
 
-  return { SIZE, AIRCRAFT_COUNT, DIRECTIONS, SHAPES, rotate, placements, createGame, shoot };
+  /*
+   * Once the game is over, show where both aircraft were. Returns the squares
+   * that were still hidden. Does nothing while the game is in progress.
+   */
+  function uncoverAircraft(game) {
+    const uncovered = [];
+    if (!game.over) return uncovered;
+    game.aircraft.forEach((plane) => {
+      plane.cells.forEach((cell) => {
+        if (game.state[cell.r][cell.c] !== 'hidden') return;
+        game.state[cell.r][cell.c] = 'body';
+        uncovered.push(cell);
+      });
+    });
+    return uncovered;
+  }
+
+  return {
+    SIZE, AIRCRAFT_COUNT, DIRECTIONS, SHAPES,
+    rotate, placements, createGame, shoot, uncoverAircraft,
+  };
 });

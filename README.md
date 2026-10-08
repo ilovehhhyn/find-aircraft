@@ -1,10 +1,10 @@
 # Find Aircraft
 
-Two aircraft are hidden under a 10 × 10 layer of cloud. Find both cockpits in as few shots as you can.
+Two aircraft are hidden on a 10 × 10 grid. Find both cockpits in as few shots as you can.
 
 **[Play it here](https://ilovehhhyn.github.io/find-aircraft/)**
 
-![A game in progress: one Airliner found, a second aircraft partly uncovered](docs/screenshot.png)
+![A game in progress: one cockpit found, with several misses and body hits](docs/screenshot.png)
 
 This is a remake of [npes87184/find-aircraft](https://github.com/npes87184/find-aircraft), a pencil-and-paper style deduction game. This version adds three aircraft shapes that are dealt at random, a redesigned board, keyboard play, and a fly-past when you find both aircraft.
 
@@ -42,26 +42,19 @@ The same chart is shown next to the board while you play.
 
 ### Taking a shot
 
-Pick any square that is still covered by cloud. One of three things happens:
+Pick any square you have not shot yet. One of three things happens:
 
-| Result | What you see | What it means |
+| Result | Colour | What it means |
 | --- | --- | --- |
-| Miss | The cloud clears to open sky | No aircraft occupies this square |
-| Body hit | A blue square | Part of an aircraft is here, but not its cockpit |
-| Cockpit hit | A magenta square with a ring | That aircraft is found |
+| Miss | White | No aircraft occupies this square |
+| Body | Dark blue | Part of an aircraft is here, but not its cockpit |
+| Cockpit | Red | You have found one aircraft |
 
-When you hit a cockpit, the rest of that aircraft is uncovered for you. Those uncovered squares are free: they do not add to your shot count. Shooting a square that is already revealed does nothing and costs nothing.
+Those three colours are all the game tells you. Hitting a cockpit does not show the rest of that aircraft or say which shape it was, so its other squares stay hidden and still cost a shot each if you shoot them. Shooting a square that is already revealed does nothing and costs nothing.
 
 ### Winning
 
-The game ends when both cockpits have been hit. The remaining cloud clears, both aircraft pulse from nose to tail, and one aircraft flies across the board. Your best (lowest) score is remembered in your browser.
-
-### Tips
-
-- Every shape has exactly one row of five squares, its wing, and the cockpit always lies on the line through the wing's centre. It is one square ahead of the wing on a Classic and two squares ahead on a Delta or an Airliner.
-- Once you have a wing, the square just ahead of its centre tells you the type. A cockpit there means a Classic. A body square there means a Delta or an Airliner, and the cockpit is one square further on.
-- A row of exactly three squares is either a tail (Classic, Airliner) or the front half of a Delta's wing, so it does not tell you which way the aircraft points on its own.
-- A found aircraft tells you where the other one is not, because aircraft cannot overlap.
+The game ends when both cockpits have been hit. Only then are both aircraft shown in full: they pulse from nose to tail and one aircraft flies across the board. Your best (lowest) score is remembered in your browser.
 
 ## Controls
 

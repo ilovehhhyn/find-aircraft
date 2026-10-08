@@ -1,16 +1,16 @@
 /*
- * Palette comes from aeronautical charts, which print airspace in blue and
- * magenta, over a daytime sky. Type is B612, the face Airbus commissioned for
- * cockpit displays.
+ * The board uses the original game's three result colours: white for a miss,
+ * dark blue for a body square and red for a cockpit. Type is B612, the face
+ * Airbus commissioned for cockpit displays.
  */
 :root {
   --overcast: #e9eff3;
   --ink: #13283b;
   --muted: #4d6274;
-  --sky: #8db7d9;
-  --cloud: #ffffff;
-  --chart-blue: #17467f;
-  --chart-magenta: #c2185b;
+  --white: #ffffff;
+  --unshot: #7d8b97;
+  --body-blue: #17467f;
+  --head-red: #d62839;
   --runway: #f0b429;
   --rule: #c9d6df;
   --gap: clamp(3px, 0.9vw, 6px);
@@ -71,14 +71,14 @@ h1 {
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--ink);
-  color: var(--cloud);
+  color: var(--white);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .new-game:hover {
-  background: var(--chart-blue);
-  border-color: var(--chart-blue);
+  background: var(--body-blue);
+  border-color: var(--body-blue);
 }
 
 .new-game.is-ready {
@@ -134,7 +134,7 @@ a:focus-visible {
   align-items: center;
 }
 
-.sky {
+.board {
   position: relative;
   grid-row: 2;
   grid-column: 2;
@@ -144,8 +144,6 @@ a:focus-visible {
   gap: var(--gap);
   padding: var(--pad);
   aspect-ratio: 1;
-  background: var(--sky);
-  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -154,15 +152,15 @@ a:focus-visible {
   padding: 0;
   border: 0;
   border-radius: 24%;
-  background: var(--cloud);
-  box-shadow: inset 0 -3px 0 rgba(19, 40, 59, 0.13);
+  background: var(--unshot);
+  box-shadow: inset 0 -3px 0 rgba(19, 40, 59, 0.22);
   cursor: pointer;
   transition: transform 0.12s ease-out, background-color 0.15s;
 }
 
 .cell[data-state="hidden"]:hover {
   transform: translateY(-2px);
-  background: #f3f8fb;
+  background: #8f9ca7;
 }
 
 .cell[data-state="hidden"]:active {
@@ -174,26 +172,18 @@ a:focus-visible {
   box-shadow: none;
 }
 
+/* White on a pale page needs an edge to read as a square. */
 .cell[data-state="miss"] {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--rule);
 }
 
 .cell[data-state="body"] {
-  background: var(--chart-blue);
+  background: var(--body-blue);
 }
 
 .cell[data-state="head"] {
-  background: var(--chart-magenta);
-}
-
-/* The cockpit carries a ring so it does not depend on colour alone. */
-.cell[data-state="head"]::after {
-  content: "";
-  position: absolute;
-  inset: 28%;
-  border: 2px solid var(--cloud);
-  border-radius: 50%;
+  background: var(--head-red);
 }
 
 .cell.is-revealed {
@@ -203,11 +193,6 @@ a:focus-visible {
 
 .cell.is-celebrating {
   animation: salute 0.6s ease-in-out both;
-  animation-delay: var(--delay, 0ms);
-}
-
-.cell.is-clearing {
-  animation: part 0.45s ease-out both;
   animation-delay: var(--delay, 0ms);
 }
 
@@ -221,12 +206,7 @@ a:focus-visible {
   45% { transform: scale(1.18); }
 }
 
-@keyframes part {
-  from { background: var(--cloud); }
-  to { background: rgba(255, 255, 255, 0); }
-}
-
-/* Winning fly-past: one aircraft crosses the cleared sky, trailing vapour. */
+/* Winning fly-past: one aircraft crosses the board, trailing vapour. */
 
 .flypast {
   position: absolute;
@@ -247,8 +227,8 @@ a:focus-visible {
   display: block;
   width: 100%;
   height: auto;
-  fill: var(--cloud);
-  filter: drop-shadow(0 3px 0 rgba(19, 40, 59, 0.18));
+  fill: var(--runway);
+  filter: drop-shadow(0 3px 0 rgba(19, 40, 59, 0.3));
 }
 
 .flypast-plane::before {
@@ -260,7 +240,7 @@ a:focus-visible {
   height: 8%;
   transform: translateY(-50%);
   border-radius: 999px;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+  background: linear-gradient(to left, rgba(240, 180, 41, 0.95), rgba(240, 180, 41, 0));
 }
 
 @keyframes flypast {
@@ -332,7 +312,7 @@ a:focus-visible {
 }
 
 .shapes li {
-  min-width: 6.75rem; /* room for the "Found, twice" tag without shifting neighbours */
+  min-width: 6.75rem;
 }
 
 .shape-grid {
@@ -345,11 +325,11 @@ a:focus-visible {
 
 .shape-grid i {
   border-radius: 3px;
-  background: var(--chart-blue);
+  background: var(--body-blue);
 }
 
 .shape-grid i.is-head {
-  background: var(--chart-magenta);
+  background: var(--head-red);
 }
 
 .shape-name {
@@ -362,20 +342,6 @@ a:focus-visible {
   display: block;
   color: var(--muted);
   font-size: 0.875rem;
-}
-
-.shape-found {
-  display: inline-block;
-  margin-top: 0.35rem;
-  padding: 0.05rem 0.5rem;
-  border-radius: 999px;
-  background: var(--runway);
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
-.shape-found[hidden] {
-  display: none;
 }
 
 .key {
@@ -402,30 +368,22 @@ a:focus-visible {
   border-radius: 24%;
 }
 
-.swatch-cloud {
-  background: var(--cloud);
-  box-shadow: inset 0 -2px 0 rgba(19, 40, 59, 0.13);
+.swatch-hidden {
+  background: var(--unshot);
+  box-shadow: inset 0 -2px 0 rgba(19, 40, 59, 0.22);
 }
 
 .swatch-miss {
-  background: var(--sky);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.6);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--rule);
 }
 
 .swatch-body {
-  background: var(--chart-blue);
+  background: var(--body-blue);
 }
 
 .swatch-head {
-  background: var(--chart-magenta);
-}
-
-.swatch-head::after {
-  content: "";
-  position: absolute;
-  inset: 26%;
-  border: 1.5px solid var(--cloud);
-  border-radius: 50%;
+  background: var(--head-red);
 }
 
 .credits {
@@ -441,7 +399,7 @@ a:focus-visible {
 }
 
 a {
-  color: var(--chart-blue);
+  color: var(--body-blue);
 }
 
 @media (max-width: 52rem) {
@@ -478,10 +436,5 @@ a {
   .cell.is-revealed,
   .cell.is-celebrating {
     animation: none;
-  }
-
-  .cell.is-clearing {
-    animation-duration: 1ms;
-    animation-delay: 0ms;
   }
 }

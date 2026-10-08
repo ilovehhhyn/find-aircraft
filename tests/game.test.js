@@ -78,25 +78,42 @@ test('a miss, a body hit and a repeat shot are scored correctly', () => {
   assert.equal(game.remaining, 2);
 });
 
-test('a cockpit hit uncovers the whole aircraft, and two end the game', () => {
+test('a cockpit hit reveals only the cockpit, and two end the game', () => {
   const game = G.createGame(seeded(11));
   const [first, second] = game.aircraft;
 
   const hit = G.shoot(game, first.head.r, first.head.c);
   assert.equal(hit.type, 'head');
   assert.equal(hit.won, false);
-  assert.equal(hit.uncovered.length, first.cells.length - 1);
   assert.equal(game.remaining, 1);
   assert.equal(game.state[first.head.r][first.head.c], 'head');
 
-  // Uncovered squares are free: shooting one does not cost a shot.
-  const free = first.cells[2];
-  assert.equal(G.shoot(game, free.r, free.c).type, 'ignored');
-  assert.equal(game.shots, 1);
+  // The rest of the found aircraft is still hidden and still costs a shot.
+  for (const cell of first.cells.slice(1)) {
+    assert.equal(game.state[cell.r][cell.c], 'hidden');
+  }
+  assert.deepEqual(G.uncoverAircraft(game), []);
+  const body = first.cells[2];
+  assert.equal(G.shoot(game, body.r, body.c).type, 'body');
+  assert.equal(game.shots, 2);
 
   const last = G.shoot(game, second.head.r, second.head.c);
   assert.equal(last.won, true);
   assert.equal(game.over, true);
-  assert.equal(game.shots, 2);
+  assert.equal(game.shots, 3);
   assert.equal(G.shoot(game, 0, 0).type, 'ignored');
+});
+
+test('after a win, the rest of both aircraft can be uncovered', () => {
+  const game = G.createGame(seeded(23));
+  const [first, second] = game.aircraft;
+  G.shoot(game, first.head.r, first.head.c);
+  G.shoot(game, second.head.r, second.head.c);
+
+  const uncovered = G.uncoverAircraft(game);
+  assert.equal(uncovered.length, first.cells.length + second.cells.length - 2);
+  for (const plane of game.aircraft) {
+    for (const cell of plane.cells.slice(1)) assert.equal(game.state[cell.r][cell.c], 'body');
+  }
+  assert.equal(game.shots, 2);
 });

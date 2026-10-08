@@ -2,17 +2,17 @@
 (function () {
   'use strict';
 
-  const { SIZE, SHAPES, createGame, shoot } = window.FindAircraft;
+  const { SIZE, SHAPES, createGame, shoot, uncoverAircraft } = window.FindAircraft;
   const COLUMN_NAMES = 'ABCDEFGHIJ';
   const BEST_KEY = 'find-aircraft.best';
   const STATE_WORDS = {
-    hidden: 'cloud',
-    miss: 'clear sky',
+    hidden: 'not shot yet',
+    miss: 'miss',
     body: 'aircraft body',
     head: 'cockpit',
   };
 
-  const sky = document.getElementById('sky');
+  const board = document.getElementById('board');
   const statusEl = document.getElementById('status');
   const shotsEl = document.getElementById('shots');
   const leftEl = document.getElementById('left');
@@ -23,7 +23,6 @@
 
   let game;
   let cells = []; // cells[r][c] is the button for that square
-  let foundTags = {}; // shape id -> the "Found" tag on the recognition chart
   let timers = [];
   let focus = { r: 0, c: 0 };
 
@@ -80,17 +79,17 @@
         cell.className = 'cell';
         cell.dataset.r = String(r);
         cell.dataset.c = String(c);
-        sky.appendChild(cell);
+        board.appendChild(cell);
         row.push(cell);
       }
       cells.push(row);
     }
-    sky.addEventListener('click', (event) => {
+    board.addEventListener('click', (event) => {
       const cell = event.target.closest('.cell');
       if (cell) takeShot(Number(cell.dataset.r), Number(cell.dataset.c));
     });
-    sky.addEventListener('keydown', onBoardKey);
-    sky.addEventListener('focusin', (event) => {
+    board.addEventListener('keydown', onBoardKey);
+    board.addEventListener('focusin', (event) => {
       const cell = event.target.closest('.cell');
       if (cell) setFocusSquare(Number(cell.dataset.r), Number(cell.dataset.c), false);
     });
@@ -118,12 +117,7 @@
       const meta = document.createElement('span');
       meta.className = 'shape-meta';
       meta.textContent = shape.cells.length + ' squares';
-      const tag = document.createElement('span');
-      tag.className = 'shape-found';
-      tag.hidden = true;
-      foundTags[shape.id] = tag;
-
-      item.append(grid, name, meta, tag);
+      item.append(grid, name, meta);
       shapesEl.appendChild(item);
     });
   }
@@ -174,15 +168,6 @@
     leftEl.textContent = String(game.remaining);
   }
 
-  function showFoundTags() {
-    SHAPES.forEach((shape) => {
-      const count = game.aircraft.filter((p) => p.found && p.shape.id === shape.id).length;
-      const tag = foundTags[shape.id];
-      tag.hidden = count === 0;
-      tag.textContent = count > 1 ? 'Found, twice' : 'Found';
-    });
-  }
-
   function takeShot(r, c) {
     const result = shoot(game, r, c);
     if (result.type === 'ignored') return;
@@ -190,28 +175,17 @@
     paint(r, c, 0);
     showCounts();
 
+    // The status line reports the result and nothing else: no advice, and
+    // no word on which shape was hit.
     if (result.type === 'miss') {
-      statusEl.textContent = name + ': clear sky.';
-      return;
+      statusEl.textContent = name + ': miss.';
+    } else if (result.type === 'body') {
+      statusEl.textContent = name + ': body.';
+    } else if (!result.won) {
+      statusEl.textContent = name + ': cockpit. One aircraft left.';
+    } else {
+      finish();
     }
-    if (result.type === 'body') {
-      statusEl.textContent = name + ': hit. That is part of an aircraft, now find its cockpit.';
-      return;
-    }
-
-    // Cockpit: uncover the rest of the aircraft, spreading outward from the hit.
-    result.uncovered.forEach((cell) => {
-      const distance = Math.abs(cell.r - r) + Math.abs(cell.c - c);
-      paint(cell.r, cell.c, distance * 45);
-    });
-    showFoundTags();
-
-    if (!result.won) {
-      statusEl.textContent =
-        name + ': cockpit. ' + result.aircraft.shape.name + ' found, one aircraft left.';
-      return;
-    }
-    finish();
   }
 
   function finish() {
@@ -225,34 +199,29 @@
       'Both aircraft found in ' + game.shots + ' shots.' +
       (isBest ? ' That is your best so far.' : ' Your best is ' + previousBest + '.');
     newGameButton.classList.add('is-ready');
-    later(celebrate, reducedMotion.matches ? 0 : 380);
+
+    // The game is over, so show where both aircraft were, nose to tail.
+    const heads = game.aircraft.map((plane) => plane.head);
+    uncoverAircraft(game).forEach((cell) => {
+      const head = heads[game.owner[cell.r][cell.c]];
+      const distance = Math.abs(cell.r - head.r) + Math.abs(cell.c - head.c);
+      paint(cell.r, cell.c, distance * 60);
+    });
+    later(celebrate, reducedMotion.matches ? 0 : 520);
   }
 
   /*
-   * The winning moment: the remaining cloud parts column by column, both
-   * aircraft pulse from nose to tail, and one aircraft flies across the board.
+   * The winning moment: both aircraft pulse from nose to tail and one
+   * aircraft flies across the board.
    */
   function celebrate() {
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        const cell = cells[r][c];
-        if (game.state[r][c] !== 'hidden') continue;
-        cell.dataset.state = 'miss';
-        cell.setAttribute('aria-disabled', 'true');
-        cell.setAttribute('aria-label', squareName(r, c) + ', clear sky');
-        cell.classList.remove('is-revealed');
-        cell.style.setProperty('--delay', c * 35 + 'ms');
-        cell.classList.add('is-clearing');
-      }
-    }
-
     game.aircraft.forEach((plane) => {
       plane.cells.forEach((square) => {
         const cell = cells[square.r][square.c];
         const distance =
           Math.abs(square.r - plane.head.r) + Math.abs(square.c - plane.head.c);
         cell.classList.remove('is-revealed');
-        cell.style.setProperty('--delay', 250 + distance * 70 + 'ms');
+        cell.style.setProperty('--delay', distance * 70 + 'ms');
         void cell.offsetWidth;
         cell.classList.add('is-celebrating');
       });
@@ -269,13 +238,13 @@
       '<path d="M8 22 4 13h3l6 9zM8 26 4 35h3l6-9z"/>' +
       '</svg></div>';
     flypast.addEventListener('animationend', () => flypast.remove());
-    sky.appendChild(flypast);
+    board.appendChild(flypast);
   }
 
   function newGame() {
     timers.forEach((id) => window.clearTimeout(id));
     timers = [];
-    const flypast = sky.querySelector('.flypast');
+    const flypast = board.querySelector('.flypast');
     if (flypast) flypast.remove();
 
     game = createGame();
@@ -287,7 +256,6 @@
     }
     cells[focus.r][focus.c].tabIndex = 0;
     showCounts();
-    showFoundTags();
     showBest(readBest());
     newGameButton.classList.remove('is-ready');
     statusEl.textContent = 'Pick a square to take your first shot.';

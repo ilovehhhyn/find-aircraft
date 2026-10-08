@@ -15,6 +15,14 @@
   const DIRECTIONS = ['up', 'right', 'down', 'left'];
 
   /*
+   * Two sets of rules share one board:
+   *   'find'   light mode. Hit both cockpits in as few shots as you can.
+   *   'avoid'  dark mode. Uncover every body square of both aircraft, but
+   *            hit both cockpits and you lose.
+   */
+  const MODES = ['find', 'avoid'];
+
+  /*
    * Each shape is a list of [row, column] offsets from the cockpit, drawn with
    * the nose pointing up. The first offset is always the cockpit itself.
    */
@@ -99,8 +107,10 @@
    * Start a game. Each aircraft draws its shape independently and uniformly
    * from SHAPES, then a position uniformly from the places that shape fits.
    */
-  function createGame(rng) {
+  function createGame(rng, mode) {
     rng = rng || Math.random;
+    mode = mode || 'find';
+    if (!MODES.includes(mode)) throw new Error('Unknown mode: ' + mode);
     for (let attempt = 0; attempt < 100; attempt++) {
       const owner = emptyGrid(-1);
       const occupied = emptyGrid(false);
@@ -126,13 +136,20 @@
       if (aircraft.length === AIRCRAFT_COUNT) {
         return {
           size: SIZE,
+          mode,
           aircraft,
           owner,
           // Per square: 'hidden', 'miss', 'body' or 'head'.
           state: emptyGrid('hidden'),
           shots: 0,
+          // Aircraft whose cockpit has not been hit yet.
           remaining: AIRCRAFT_COUNT,
+          cockpitsHit: 0,
+          bodiesFound: 0,
+          bodiesTotal: aircraft.reduce((sum, plane) => sum + plane.cells.length - 1, 0),
           over: false,
+          // null while playing, then 'won' or 'lost'.
+          outcome: null,
         };
       }
     }
@@ -143,8 +160,11 @@
    * Take a shot at a square. Returns what happened:
    *   { type: 'ignored' }                      already revealed, or game over
    *   { type: 'miss' | 'body' | 'head', ... }  a counted shot
-   * A cockpit hit reveals only the cockpit. The rest of that aircraft stays
-   * hidden, and shooting its squares still costs shots.
+   * `won` and `lost` say whether this shot ended the game. A cockpit hit
+   * reveals only the cockpit; the rest of that aircraft stays hidden.
+   *
+   * In 'find' mode the game is won on the second cockpit. In 'avoid' mode the
+   * second cockpit loses it, and the last body square wins it.
    */
   function shoot(game, r, c) {
     if (game.over || !inBounds(r, c) || game.state[r][c] !== 'hidden') {
@@ -154,18 +174,33 @@
     const index = game.owner[r][c];
     if (index === -1) {
       game.state[r][c] = 'miss';
-      return { type: 'miss' };
+      return { type: 'miss', won: false, lost: false };
     }
     const plane = game.aircraft[index];
-    if (plane.head.r !== r || plane.head.c !== c) {
+    const isHead = plane.head.r === r && plane.head.c === c;
+    if (isHead) {
+      game.state[r][c] = 'head';
+      plane.found = true;
+      game.remaining -= 1;
+      game.cockpitsHit += 1;
+    } else {
       game.state[r][c] = 'body';
-      return { type: 'body', aircraft: plane };
+      game.bodiesFound += 1;
     }
-    game.state[r][c] = 'head';
-    plane.found = true;
-    game.remaining -= 1;
-    game.over = game.remaining === 0;
-    return { type: 'head', aircraft: plane, won: game.over };
+
+    if (game.mode === 'avoid') {
+      if (game.cockpitsHit === AIRCRAFT_COUNT) game.outcome = 'lost';
+      else if (game.bodiesFound === game.bodiesTotal) game.outcome = 'won';
+    } else if (game.remaining === 0) {
+      game.outcome = 'won';
+    }
+    game.over = game.outcome !== null;
+    return {
+      type: isHead ? 'head' : 'body',
+      aircraft: plane,
+      won: game.outcome === 'won',
+      lost: game.outcome === 'lost',
+    };
   }
 
   /*
@@ -176,9 +211,9 @@
     const uncovered = [];
     if (!game.over) return uncovered;
     game.aircraft.forEach((plane) => {
-      plane.cells.forEach((cell) => {
+      plane.cells.forEach((cell, i) => {
         if (game.state[cell.r][cell.c] !== 'hidden') return;
-        game.state[cell.r][cell.c] = 'body';
+        game.state[cell.r][cell.c] = i === 0 ? 'head' : 'body';
         uncovered.push(cell);
       });
     });
@@ -186,7 +221,7 @@
   }
 
   return {
-    SIZE, AIRCRAFT_COUNT, DIRECTIONS, SHAPES,
+    SIZE, AIRCRAFT_COUNT, DIRECTIONS, MODES, SHAPES,
     rotate, placements, createGame, shoot, uncoverAircraft,
   };
 });

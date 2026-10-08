@@ -6,9 +6,11 @@ Two aircraft are hidden on a 10 × 10 grid. Find both cockpits in as few shots a
 
 ![A game in progress: one cockpit found, with several misses and body hits](docs/screenshot.png)
 
-This is a remake of [npes87184/find-aircraft](https://github.com/npes87184/find-aircraft), a pencil-and-paper style deduction game. This version adds three aircraft shapes that are dealt at random, a redesigned board, keyboard play, and a fly-past when you find both aircraft.
+This is a remake of [npes87184/find-aircraft](https://github.com/npes87184/find-aircraft), a pencil-and-paper style deduction game. This version adds three aircraft shapes that are dealt at random, a redesigned board, keyboard play, a fly-past when you find both aircraft, accounts with a leaderboard, and a dark mode with its own rules.
 
 ## Rules
+
+These are the rules for light mode, the standard game. Dark mode changes the goal and is described further down.
 
 ### Goal
 
@@ -56,11 +58,41 @@ Those three colours are all the game tells you. Hitting a cockpit does not show 
 
 The game ends when both cockpits have been hit. Only then are both aircraft shown in full: they pulse from nose to tail and one aircraft flies across the board. Your best (lowest) score is remembered in your browser.
 
+## Dark mode: avoid the cockpits
+
+The moon button in the toolbar switches to dark mode, which turns the game around. Switching mode always deals a new game.
+
+- **Goal:** uncover every body square of both aircraft.
+- **Losing:** you may hit one cockpit and carry on. Hit both cockpits and you lose.
+- **Misses** cost nothing.
+- The three colours mean the same as in light mode, and a cockpit hit still reveals only that one square.
+- The counter shows how many body squares you have found, not how many remain, because the total would reveal which shapes are hidden.
+- Dark mode games are **not** counted on the leaderboard.
+
+## Accounts and leaderboard
+
+When you open the site, a dialog offers three choices: **sign up** with a name (shown on the leaderboard) and a password, **sign in** to an existing account, or **play as guest**.
+
+- The person button in the toolbar opens the same dialog at any time, so you can sign up or sign in part-way through a game without losing it. A best score you earned as a guest moves into the account.
+- The leaderboard button lists every player's best game: the fewest shots taken to find both aircraft in light mode.
+- Scores are reported by the browser, so this is a leaderboard for friends, not a cheat-proof one. Use a password you do not use anywhere else.
+
+### Where the data lives
+
+Out of the box, accounts and scores are stored in the browser (`localStorage`), so the leaderboard only lists accounts made on the same device. To share one leaderboard between everyone:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open the SQL editor and run [`supabase/schema.sql`](supabase/schema.sql).
+3. Copy the project URL and the public key (labelled "anon public" or "publishable") into [`js/config.js`](js/config.js).
+
+That key is meant to be public. The accounts table has row level security with no policies, so the key cannot read or write it directly; it can only call four database functions (sign up, sign in, submit a score, read the leaderboard). Passwords are stored as bcrypt hashes. Never put a Supabase access token or `service_role` key in this repository.
+
 ## Controls
 
 - **Mouse or touch:** click or tap a square to shoot it.
 - **Keyboard:** press Tab to reach the board, move with the arrow keys, and press Enter or Space to shoot.
 - **New game:** deals two new aircraft at any time.
+- **Toolbar:** leaderboard, light/dark mode, and your account.
 
 ## Run it locally
 
@@ -82,9 +114,13 @@ node --test
 | File | Purpose |
 | --- | --- |
 | `js/game.js` | The rules: shapes, random placement and shot resolution. No DOM access, so it runs in Node for the tests. |
-| `js/ui.js` | Draws the board, handles input and plays the animations. |
+| `js/ui.js` | Draws the board, handles input, switches mode and plays the animations. |
+| `js/store.js` | Accounts, sessions and the leaderboard, with a browser-only backend and a Supabase backend. |
+| `js/account.js` | The sign up / sign in dialog and the leaderboard dialog. |
+| `js/config.js` | Supabase project URL and public key (empty by default). |
+| `supabase/schema.sql` | The database table and functions. |
 | `css/style.css` | Layout, colours and animation. |
-| `tests/game.test.js` | Tests for placement and scoring. |
+| `tests/` | Tests for the rules of both modes and for the account store. |
 
 To add or change a shape, edit the `SHAPES` list in `js/game.js`. Each shape is a list of `[row, column]` offsets from the cockpit with the nose pointing up, and the first offset must be the cockpit `[0, 0]`. The board, the chart and the placement logic all read from that list.
 

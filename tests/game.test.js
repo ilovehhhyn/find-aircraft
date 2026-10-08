@@ -117,3 +117,51 @@ test('after a win, the rest of both aircraft can be uncovered', () => {
   }
   assert.equal(game.shots, 2);
 });
+
+test('avoid mode: uncovering every body square wins, even after one cockpit hit', () => {
+  const game = G.createGame(seeded(31), 'avoid');
+  const [first, second] = game.aircraft;
+  assert.equal(game.bodiesTotal, first.cells.length + second.cells.length - 2);
+
+  const warning = G.shoot(game, first.head.r, first.head.c);
+  assert.equal(warning.type, 'head');
+  assert.equal(warning.won, false);
+  assert.equal(warning.lost, false);
+  assert.equal(game.cockpitsHit, 1);
+
+  const bodies = [...first.cells.slice(1), ...second.cells.slice(1)];
+  bodies.forEach((cell, i) => {
+    const result = G.shoot(game, cell.r, cell.c);
+    assert.equal(result.type, 'body');
+    assert.equal(result.won, i === bodies.length - 1);
+  });
+  assert.equal(game.outcome, 'won');
+  assert.equal(game.over, true);
+
+  // The cockpit that was never hit is shown once the game is over.
+  assert.deepEqual(G.uncoverAircraft(game), [second.head]);
+  assert.equal(game.state[second.head.r][second.head.c], 'head');
+});
+
+test('avoid mode: the second cockpit loses the game', () => {
+  const game = G.createGame(seeded(37), 'avoid');
+  const [first, second] = game.aircraft;
+  assert.equal(G.shoot(game, first.head.r, first.head.c).lost, false);
+  const last = G.shoot(game, second.head.r, second.head.c);
+  assert.equal(last.lost, true);
+  assert.equal(last.won, false);
+  assert.equal(game.outcome, 'lost');
+  assert.equal(G.shoot(game, first.cells[1].r, first.cells[1].c).type, 'ignored');
+  assert.equal(G.uncoverAircraft(game).length, game.bodiesTotal);
+});
+
+test('find mode still ends in a win on the second cockpit', () => {
+  const game = G.createGame(seeded(41));
+  assert.equal(game.mode, 'find');
+  G.shoot(game, game.aircraft[0].head.r, game.aircraft[0].head.c);
+  const last = G.shoot(game, game.aircraft[1].head.r, game.aircraft[1].head.c);
+  assert.equal(last.won, true);
+  assert.equal(last.lost, false);
+  assert.equal(game.outcome, 'won');
+  assert.throws(() => G.createGame(seeded(1), 'nope'));
+});

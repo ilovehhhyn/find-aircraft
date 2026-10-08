@@ -2,20 +2,54 @@
  * The board uses the original game's three result colours: white for a miss,
  * dark blue for a body square and red for a cockpit. Type is B612, the face
  * Airbus commissioned for cockpit displays.
+ *
+ * Light mode is the daytime "find the cockpits" game. Dark mode is the
+ * "avoid the cockpits" game and repaints the same page as a night scene.
  */
 :root {
-  --overcast: #e9eff3;
+  --page: #e9eff3;
+  --surface: #ffffff;
   --ink: #13283b;
   --muted: #4d6274;
-  --white: #ffffff;
-  --unshot: #7d8b97;
-  --body-blue: #17467f;
-  --head-red: #d62839;
-  --runway: #f0b429;
   --rule: #c9d6df;
+  --unshot: #7d8b97;
+  --unshot-hover: #8f9ca7;
+  --unshot-edge: rgba(19, 40, 59, 0.22);
+  --miss: #ffffff;
+  --miss-edge: #c9d6df;
+  --body: #17467f;
+  --head: #d62839;
+  --button-bg: #13283b;
+  --button-fg: #ffffff;
+  --ready-bg: #f0b429;
+  --ready-fg: #13283b;
+  --flypast: #f0b429;
+  --error: #b3202f;
   --gap: clamp(3px, 0.9vw, 6px);
   --pad: clamp(6px, 1.6vw, 12px);
   --label: 1.6rem;
+}
+
+:root[data-mode="dark"] {
+  --page: #090b12;
+  --surface: #131625;
+  --ink: #dcdde6;
+  --muted: #8f94ac;
+  --rule: #262b3f;
+  --unshot: #1f2335;
+  --unshot-hover: #2c3048;
+  --unshot-edge: rgba(0, 0, 0, 0.55);
+  --miss: #e9e4d6;
+  --miss-edge: transparent;
+  --body: #3f74d6;
+  --head: #e0263c;
+  --button-bg: #dcdde6;
+  --button-fg: #090b12;
+  --ready-bg: #e0263c;
+  --ready-fg: #ffffff;
+  --flypast: #e9e4d6;
+  --error: #ff7a88;
+  color-scheme: dark;
 }
 
 *,
@@ -26,7 +60,8 @@
 
 body {
   margin: 0;
-  background: var(--overcast);
+  min-height: 100vh;
+  background: var(--page);
   color: var(--ink);
   font-family: "B612", "Segoe UI", system-ui, sans-serif;
   font-size: 1rem;
@@ -34,9 +69,23 @@ body {
 }
 
 .page {
+  position: relative;
+  z-index: 1;
   max-width: 62rem;
   margin: 0 auto;
   padding: 2.5rem 1.25rem 2rem;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* Masthead */
@@ -45,7 +94,7 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem 1.5rem;
   flex-wrap: wrap;
   padding-bottom: 1.5rem;
   border-bottom: 2px solid var(--ink);
@@ -60,38 +109,97 @@ h1 {
 
 .brief {
   margin: 0.6rem 0 0;
-  max-width: 34rem;
+  max-width: 30rem;
   color: var(--muted);
 }
 
-.new-game {
-  font: inherit;
-  font-weight: 700;
-  padding: 0.7rem 1.3rem;
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.icon-button,
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 2.9rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-button {
+  width: 2.9rem;
+  padding: 0;
+}
+
+.pill-button {
+  padding: 0 1rem 0 0.8rem;
+  max-width: 12rem;
+}
+
+.pill-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-button:hover,
+.pill-button:hover {
   background: var(--ink);
-  color: var(--white);
+  color: var(--page);
+}
+
+.toolbar svg,
+.sheet-close svg {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The toggle shows where it will take you: a moon by day, a sun by night. */
+.icon-sun,
+:root[data-mode="dark"] .icon-moon {
+  display: none;
+}
+
+:root[data-mode="dark"] .icon-sun {
+  display: block;
+}
+
+.new-game {
+  height: 2.9rem;
+  padding: 0 1.3rem;
+  font-weight: 700;
+  border: 2px solid var(--button-bg);
+  border-radius: 999px;
+  background: var(--button-bg);
+  color: var(--button-fg);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .new-game:hover {
-  background: var(--body-blue);
-  border-color: var(--body-blue);
+  background: var(--body);
+  border-color: var(--body);
+  color: #ffffff;
 }
 
 .new-game.is-ready {
-  background: var(--runway);
-  color: var(--ink);
+  background: var(--ready-bg);
+  color: var(--ready-fg);
   border-color: var(--ink);
-}
-
-.new-game:focus-visible,
-.cell:focus-visible,
-a:focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
 }
 
 /* Layout */
@@ -145,6 +253,7 @@ a:focus-visible {
   padding: var(--pad);
   aspect-ratio: 1;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .cell {
@@ -153,14 +262,14 @@ a:focus-visible {
   border: 0;
   border-radius: 24%;
   background: var(--unshot);
-  box-shadow: inset 0 -3px 0 rgba(19, 40, 59, 0.22);
+  box-shadow: inset 0 -3px 0 var(--unshot-edge);
   cursor: pointer;
   transition: transform 0.12s ease-out, background-color 0.15s;
 }
 
 .cell[data-state="hidden"]:hover {
   transform: translateY(-2px);
-  background: #8f9ca7;
+  background: var(--unshot-hover);
 }
 
 .cell[data-state="hidden"]:active {
@@ -174,16 +283,16 @@ a:focus-visible {
 
 /* White on a pale page needs an edge to read as a square. */
 .cell[data-state="miss"] {
-  background: var(--white);
-  box-shadow: inset 0 0 0 1.5px var(--rule);
+  background: var(--miss);
+  box-shadow: inset 0 0 0 1.5px var(--miss-edge);
 }
 
 .cell[data-state="body"] {
-  background: var(--body-blue);
+  background: var(--body);
 }
 
 .cell[data-state="head"] {
-  background: var(--head-red);
+  background: var(--head);
 }
 
 .cell.is-revealed {
@@ -227,7 +336,7 @@ a:focus-visible {
   display: block;
   width: 100%;
   height: auto;
-  fill: var(--runway);
+  fill: var(--flypast);
   filter: drop-shadow(0 3px 0 rgba(19, 40, 59, 0.3));
 }
 
@@ -240,7 +349,7 @@ a:focus-visible {
   height: 8%;
   transform: translateY(-50%);
   border-radius: 999px;
-  background: linear-gradient(to left, rgba(240, 180, 41, 0.95), rgba(240, 180, 41, 0));
+  background: linear-gradient(to left, var(--flypast), transparent);
 }
 
 @keyframes flypast {
@@ -260,7 +369,7 @@ a:focus-visible {
   display: grid;
   grid-template-columns: repeat(3, auto);
   justify-content: start;
-  gap: 2rem;
+  gap: 1rem 2rem;
   margin: 0;
 }
 
@@ -275,6 +384,7 @@ a:focus-visible {
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .counts dd.is-empty {
@@ -325,11 +435,11 @@ a:focus-visible {
 
 .shape-grid i {
   border-radius: 3px;
-  background: var(--body-blue);
+  background: var(--body);
 }
 
 .shape-grid i.is-head {
-  background: var(--head-red);
+  background: var(--head);
 }
 
 .shape-name {
@@ -361,7 +471,6 @@ a:focus-visible {
 }
 
 .swatch {
-  position: relative;
   flex: none;
   width: 1.15rem;
   height: 1.15rem;
@@ -370,20 +479,20 @@ a:focus-visible {
 
 .swatch-hidden {
   background: var(--unshot);
-  box-shadow: inset 0 -2px 0 rgba(19, 40, 59, 0.22);
+  box-shadow: inset 0 -2px 0 var(--unshot-edge);
 }
 
 .swatch-miss {
-  background: var(--white);
-  box-shadow: inset 0 0 0 1.5px var(--rule);
+  background: var(--miss);
+  box-shadow: inset 0 0 0 1.5px var(--miss-edge);
 }
 
 .swatch-body {
-  background: var(--body-blue);
+  background: var(--body);
 }
 
 .swatch-head {
-  background: var(--head-red);
+  background: var(--head);
 }
 
 .credits {
@@ -399,8 +508,316 @@ a:focus-visible {
 }
 
 a {
-  color: var(--body-blue);
+  color: var(--body);
 }
+
+/* Dialogs: account and leaderboard */
+
+.sheet {
+  width: min(26rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.75rem 1.5rem 1.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.sheet::backdrop {
+  background: rgba(9, 14, 22, 0.6);
+}
+
+.sheet h2 {
+  margin: 0;
+  padding-right: 2.5rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.sheet-lede {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+}
+
+.sheet-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sheet-close:hover {
+  background: var(--rule);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 1.25rem;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--rule);
+}
+
+.tabs button {
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+}
+
+#account-form {
+  display: grid;
+  margin-top: 1.25rem;
+}
+
+#account-form label {
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+#account-form input {
+  margin: 0.3rem 0 1rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid var(--muted);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field-hint {
+  margin: -0.5rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.form-error {
+  margin: 0 0 1rem;
+  color: var(--error);
+  font-weight: 700;
+}
+
+.form-error[hidden],
+.field-hint[hidden] {
+  display: none;
+}
+
+.primary,
+.secondary {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--button-bg);
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--button-bg);
+  color: var(--button-fg);
+}
+
+.primary[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.secondary {
+  margin-top: 0.75rem;
+  background: transparent;
+}
+
+.secondary:hover {
+  background: var(--rule);
+}
+
+#account-signed-in .secondary {
+  margin-top: 1.5rem;
+}
+
+.board-message {
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+}
+
+.board-message:empty {
+  display: none;
+}
+
+.ranks {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.ranks li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0.5rem;
+  border-top: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranks li:first-child {
+  border-top: 0;
+}
+
+.ranks .rank {
+  color: var(--muted);
+}
+
+.ranks .who {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranks li.is-you {
+  border-radius: 10px;
+  background: var(--rule);
+}
+
+#leaderboard-note {
+  margin: 1rem 0 0;
+}
+
+/* ---------- Dark mode: the night game ---------- */
+
+/* Fog drifting behind the page, and darkness closing in at the edges. */
+:root[data-mode="dark"] body::before,
+:root[data-mode="dark"] body::after {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+}
+
+:root[data-mode="dark"] body::before {
+  background:
+    radial-gradient(60rem 28rem at 18% 12%, rgba(104, 116, 190, 0.17), transparent 62%),
+    radial-gradient(48rem 26rem at 86% 74%, rgba(160, 36, 60, 0.13), transparent 62%),
+    radial-gradient(40rem 20rem at 60% 40%, rgba(200, 205, 230, 0.05), transparent 60%);
+  animation: fog 36s ease-in-out infinite alternate;
+}
+
+:root[data-mode="dark"] body::after {
+  background: radial-gradient(ellipse at 50% 42%, transparent 48%, rgba(0, 0, 0, 0.72));
+  transition: background 0.6s;
+}
+
+/* Losing leaves the edges of the page red. */
+:root[data-mode="dark"][data-outcome="lost"] body::after {
+  background: radial-gradient(ellipse at 50% 42%, transparent 34%, rgba(128, 0, 18, 0.6));
+}
+
+@keyframes fog {
+  from { transform: translate3d(-3%, -1%, 0) scale(1); }
+  to { transform: translate3d(4%, 2%, 0) scale(1.08); }
+}
+
+:root[data-mode="dark"] h1 {
+  font-family: "Creepster", "B612", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 8vw, 4rem);
+  letter-spacing: 0.03em;
+  color: var(--miss);
+  text-shadow: 0 0 18px rgba(224, 38, 60, 0.55), 0 0 2px rgba(224, 38, 60, 0.9);
+  animation: flicker 7s linear infinite;
+}
+
+/* A failing bulb: steady most of the time, then two quick dips. */
+@keyframes flicker {
+  0%, 86%, 89%, 92%, 100% { opacity: 1; }
+  87.5% { opacity: 0.35; }
+  90.5% { opacity: 0.6; }
+}
+
+:root[data-mode="dark"] .cell[data-state="hidden"]:hover {
+  box-shadow: inset 0 0 0 1.5px rgba(224, 38, 60, 0.55), 0 0 12px rgba(224, 38, 60, 0.25);
+}
+
+:root[data-mode="dark"] .cell[data-state="head"] {
+  animation: reveal 0.28s ease-out both, pulse 1.6s ease-in-out 0.3s infinite;
+  animation-delay: var(--delay, 0ms), calc(var(--delay, 0ms) + 0.3s);
+}
+
+:root[data-mode="dark"] .cell[data-state="head"]::after {
+  content: "\2620";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #12060a;
+  font-size: 5.6cqw;
+  line-height: 1;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 6px 0 rgba(224, 38, 60, 0.5); }
+  50% { box-shadow: 0 0 18px 4px rgba(224, 38, 60, 0.85); }
+}
+
+:root[data-mode="dark"][data-outcome="lost"] .status {
+  color: var(--error);
+}
+
+:root[data-mode="dark"] .flypast-plane {
+  opacity: 0.75;
+}
+
+:root[data-mode="dark"] .flypast-plane svg {
+  filter: drop-shadow(0 0 10px rgba(233, 228, 214, 0.8));
+}
+
+/* A cockpit hit in dark mode jolts the page and flashes it red. */
+.page.is-jolted {
+  animation: jolt 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes jolt {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(5px, -1px, 0); }
+  30%, 50%, 70% { transform: translate3d(-8px, 2px, 0); }
+  40%, 60% { transform: translate3d(8px, -2px, 0); }
+}
+
+.blood-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(224, 38, 60, 0.15), rgba(160, 0, 20, 0.7));
+  animation: blood-flash 0.7s ease-out forwards;
+}
+
+@keyframes blood-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ---------- Small screens and reduced motion ---------- */
 
 @media (max-width: 52rem) {
   .layout {
@@ -423,18 +840,41 @@ a {
   }
 
   .counts {
-    gap: 1.25rem;
+    gap: 1rem 1.25rem;
+  }
+
+  .toolbar {
+    gap: 0.45rem;
+  }
+
+  .pill-button {
+    padding: 0 0.8rem 0 0.65rem;
+    max-width: 9.5rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cell,
-  .new-game {
+  .new-game,
+  .icon-button,
+  .pill-button {
     transition: none;
   }
 
   .cell.is-revealed,
-  .cell.is-celebrating {
+  .cell.is-celebrating,
+  .page.is-jolted,
+  :root[data-mode="dark"] h1,
+  :root[data-mode="dark"] body::before,
+  :root[data-mode="dark"] .cell[data-state="head"] {
     animation: none;
+  }
+
+  :root[data-mode="dark"] .cell[data-state="head"] {
+    box-shadow: 0 0 12px 2px rgba(224, 38, 60, 0.7);
+  }
+
+  .blood-flash {
+    display: none;
   }
 }

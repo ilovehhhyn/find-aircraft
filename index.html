@@ -1,23 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-mode="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Find Aircraft</title>
-  <meta name="description" content="Two aircraft are hidden on the grid. Find both cockpits in as few shots as you can.">
+  <meta name="description" content="Two aircraft are hidden on the grid. Find both cockpits in as few shots as you can, or switch to dark mode and try to avoid them.">
+  <script>
+    // Apply the saved mode before the page paints, so it does not flash.
+    try {
+      if (localStorage.getItem('find-aircraft.mode') === 'dark') {
+        document.documentElement.dataset.mode = 'dark';
+      }
+    } catch (error) {}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=Creepster&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="page">
+  <div class="page" id="page">
     <header class="masthead">
-      <div>
+      <div class="title-block">
         <h1>Find Aircraft</h1>
-        <p class="brief">Two aircraft are hidden on the grid. Find both cockpits in as few shots as you can.</p>
+        <p class="brief" id="brief"></p>
       </div>
-      <button type="button" class="new-game" id="new-game">New game</button>
+      <div class="toolbar">
+        <button type="button" class="icon-button" id="open-leaderboard" aria-label="Leaderboard" title="Leaderboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20v-8h5v8M9.5 20V5h5v15M15 20v-5h5v5M2.5 20h19"/></svg>
+        </button>
+        <button type="button" class="pill-button" id="mode-toggle">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+          <span id="mode-toggle-label">Dark mode</span>
+        </button>
+        <button type="button" class="pill-button" id="open-account">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          <span id="account-label">Sign in</span>
+        </button>
+        <button type="button" class="new-game" id="new-game">New game</button>
+      </div>
     </header>
 
     <main class="layout">
@@ -37,12 +59,12 @@
             <dd id="shots">0</dd>
           </div>
           <div>
-            <dt>Aircraft left</dt>
-            <dd id="left">2</dd>
+            <dt id="count-two-label">Aircraft left</dt>
+            <dd id="count-two">2</dd>
           </div>
           <div>
-            <dt>Best</dt>
-            <dd id="best">none yet</dd>
+            <dt id="count-three-label">Best</dt>
+            <dd id="count-three">none yet</dd>
           </div>
         </dl>
 
@@ -66,7 +88,52 @@
     </footer>
   </div>
 
+  <dialog class="sheet" id="account-dialog" aria-labelledby="account-title">
+    <button type="button" class="sheet-close" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+
+    <div id="account-signed-out">
+      <h2 id="account-title">Save your scores</h2>
+      <p class="sheet-lede">Sign up to put your best game on the leaderboard, or play as a guest.</p>
+      <div class="tabs" role="tablist" aria-label="Account">
+        <button type="button" role="tab" id="tab-sign-up" aria-selected="true" aria-controls="account-form">Sign up</button>
+        <button type="button" role="tab" id="tab-sign-in" aria-selected="false" aria-controls="account-form" tabindex="-1">Sign in</button>
+      </div>
+      <form id="account-form" role="tabpanel" aria-labelledby="tab-sign-up" novalidate>
+        <label for="account-name" id="account-name-label">Name (for leaderboard)</label>
+        <input id="account-name" name="username" type="text" autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" required>
+        <label for="account-password" id="account-password-label">Set password</label>
+        <input id="account-password" name="password" type="password" autocomplete="new-password" maxlength="72" required>
+        <p class="field-hint" id="account-hint">6 or more characters. Pick one you don't use anywhere else.</p>
+        <p class="form-error" id="account-error" role="alert" hidden></p>
+        <button type="submit" class="primary" id="account-submit">Sign up</button>
+      </form>
+      <button type="button" class="secondary" id="play-as-guest" data-close>Play as guest</button>
+    </div>
+
+    <div id="account-signed-in" hidden>
+      <h2 id="account-name-heading"></h2>
+      <p class="sheet-lede" id="account-best"></p>
+      <button type="button" class="secondary" id="sign-out">Sign out</button>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="leaderboard-dialog" aria-labelledby="leaderboard-title">
+    <button type="button" class="sheet-close" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h2 id="leaderboard-title">Leaderboard</h2>
+    <p class="sheet-lede">Fewest shots to find both aircraft in light mode. Dark mode games are not counted.</p>
+    <p class="board-message" id="leaderboard-message"></p>
+    <ol class="ranks" id="leaderboard-list"></ol>
+    <p class="field-hint" id="leaderboard-note" hidden></p>
+  </dialog>
+
+  <script src="js/config.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/store.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/account.js"></script>
 </body>
 </html>

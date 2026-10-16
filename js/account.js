@@ -155,6 +155,13 @@
     } catch (error) {
       /* Without session storage the dialog simply shows on each load. */
     }
+    let inRoom = false;
+    try {
+      inRoom = Boolean(window.localStorage.getItem('find-aircraft.room'));
+    } catch (error) {
+      /* No saved room. */
+    }
+    if (new URLSearchParams(window.location.search).has('room') || inRoom) return;
     if (!store.session() && !welcomed) openAccount();
   }
 
@@ -170,7 +177,7 @@
     button.addEventListener('click', () => button.closest('dialog').close());
   });
   // Clicking the dimmed area outside a dialog closes it.
-  [accountDialog, boardDialog].forEach((dialog) => {
+  [accountDialog, boardDialog, document.getElementById('room-dialog')].forEach((dialog) => {
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog) dialog.close();
     });

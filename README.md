@@ -69,6 +69,20 @@ The moon button in the toolbar switches to dark mode, which turns the game aroun
 - The counter shows how many body squares you have found, not how many remain, because the total would reveal which shapes are hidden.
 - Dark mode games are **not** counted on the leaderboard.
 
+## Play a friend
+
+The red **Play a friend** button opens a room for two players. You don't need an account.
+
+1. **Get a code.** The popup shows your four-letter room code, with buttons to copy the code or an invite link. The room lasts three hours.
+2. **Or join one.** Type a friend's code into the four boxes, or open their invite link, which fills the code in for you.
+3. **Hide your aircraft (1 minute).** Drag two of the three shapes onto your own grid. Tap a placed aircraft to turn it, drag it to move it, or drag it off the grid to put it back. **Random** and **Clear** help, and **Confirm** locks you in. When time runs out, whatever is on your grid is locked in and any missing aircraft are placed at random.
+4. **Search (5 minutes).** You each get the other's covered grid. Normal light-mode rules apply: a shot shows miss, body or cockpit, and nothing else. A small copy of your own grid shows where your friend has shot.
+5. **Result.** Whoever finds both cockpits in fewer shots wins, and equal shots is a draw. The round ends early once the player still searching can no longer win. If time runs out, whoever finished wins; if neither did, more cockpits found wins. Both layouts are then revealed, and **Play again** starts a new round in the same room.
+
+Your shot count from a match counts towards your best score on the leaderboard, the same as a solo game.
+
+The layouts are kept on the server and every shot is judged there, so neither player's browser ever holds the other's hidden aircraft. Rooms need the shared Supabase database: run [`supabase/rooms.sql`](supabase/rooms.sql) after `schema.sql`.
+
 ## Accounts and leaderboard
 
 When you open the site, a dialog offers three choices: **sign up** with a name (shown on the leaderboard) and a password, **sign in** to an existing account, or **play as guest**.
@@ -117,8 +131,10 @@ node --test
 | `js/ui.js` | Draws the board, handles input, switches mode and plays the animations. |
 | `js/store.js` | Accounts, sessions and the leaderboard, with a browser-only backend and a Supabase backend. |
 | `js/account.js` | The sign up / sign in dialog and the leaderboard dialog. |
+| `js/match.js` | Play a friend: the room popup, dragging aircraft into place, the duel and the result. |
 | `js/config.js` | Supabase project URL and public key (empty by default). |
-| `supabase/schema.sql` | The database table and functions. |
+| `supabase/schema.sql` | Accounts and leaderboard: table and functions. |
+| `supabase/rooms.sql` | Rooms for playing a friend: table and functions. |
 | `css/style.css` | Layout, colours and animation. |
 | `tests/` | Tests for the rules of both modes and for the account store. |
 

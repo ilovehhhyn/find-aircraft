@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=Creepster&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div class="page" id="page">
@@ -26,6 +26,10 @@
         <p class="brief" id="brief"></p>
       </div>
       <div class="toolbar">
+        <button type="button" class="pill-button friend-button" id="open-room">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.2"/><circle cx="16.5" cy="9" r="2.6"/><path d="M2.5 20c0-3.6 2.7-6 6-6s6 2.4 6 6M14.5 14.4c.6-.2 1.3-.3 2-.3 2.9 0 5 2 5 5"/></svg>
+          <span>Play a friend</span>
+        </button>
         <button type="button" class="icon-button" id="open-leaderboard" aria-label="Leaderboard" title="Leaderboard">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20v-8h5v8M9.5 20V5h5v15M15 20v-5h5v5M2.5 20h19"/></svg>
         </button>
@@ -83,6 +87,69 @@
       </aside>
     </main>
 
+    <section class="match" id="match" hidden aria-labelledby="match-title">
+      <div class="match-bar">
+        <div class="match-who">
+          <span class="room-chip">Room <b id="match-code"></b></span>
+          <span class="match-vs" id="match-vs"></span>
+        </div>
+        <button type="button" class="pill-button" data-leave-room>Leave room</button>
+      </div>
+      <div class="match-head">
+        <h2 class="match-title" id="match-title"></h2>
+        <p class="match-clock" id="match-clock" role="timer" aria-label="Time left"></p>
+      </div>
+      <div class="match-layout">
+        <div class="match-main">
+          <p class="board-title" id="match-board-title"></p>
+          <div class="field">
+            <div class="cols" id="match-cols" aria-hidden="true"></div>
+            <div class="rows" id="match-rows" aria-hidden="true"></div>
+            <div class="board" id="match-board" role="group" aria-labelledby="match-board-title"></div>
+          </div>
+          <p class="status" id="match-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <aside class="match-side">
+          <div id="place-panel">
+            <p class="side-lede">Drag two of the three aircraft onto your grid. Tap one on the grid to turn it, or drag it off to put it back. Your friend has to find them.</p>
+            <ul class="hangar" id="hangar"></ul>
+            <div class="place-actions">
+              <button type="button" class="secondary" id="place-random">Random</button>
+              <button type="button" class="secondary" id="place-clear">Clear</button>
+            </div>
+            <button type="button" class="primary" id="place-confirm" disabled>Confirm</button>
+            <p class="opp-line" id="place-opp"></p>
+          </div>
+
+          <div id="play-panel" hidden>
+            <dl class="duel">
+              <div id="duel-me">
+                <dt>You</dt>
+                <dd><b id="duel-me-shots">0</b> shots</dd>
+                <dd><span id="duel-me-heads">0 of 2</span> cockpits</dd>
+              </div>
+              <div id="duel-opp">
+                <dt id="duel-opp-name"></dt>
+                <dd><b id="duel-opp-shots">0</b> shots</dd>
+                <dd><span id="duel-opp-heads">0 of 2</span> cockpits</dd>
+              </div>
+            </dl>
+            <p class="mini-title" id="mini-title"></p>
+            <div class="mini-board" id="mini-board" aria-hidden="true"></div>
+          </div>
+
+          <div id="result-panel" class="result" hidden>
+            <p class="result-title" id="result-title"></p>
+            <div id="result-detail"></div>
+            <p class="result-saved" id="result-saved"></p>
+            <button type="button" class="primary" id="rematch">Play again</button>
+            <button type="button" class="secondary" data-leave-room>Leave room</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
     <footer class="credits">
       <p>A remake of <a href="https://github.com/npes87184/find-aircraft">npes87184/find-aircraft</a>. Rules and source are on <a href="https://github.com/ilovehhhyn/find-aircraft">GitHub</a>.</p>
     </footer>
@@ -130,10 +197,51 @@
     <p class="field-hint" id="leaderboard-note" hidden></p>
   </dialog>
 
-  <script src="js/config.js?v=4"></script>
-  <script src="js/game.js?v=4"></script>
-  <script src="js/store.js?v=4"></script>
-  <script src="js/ui.js?v=4"></script>
-  <script src="js/account.js?v=4"></script>
+  <dialog class="sheet room-sheet" id="room-dialog" aria-labelledby="room-title">
+    <button type="button" class="sheet-close" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h2 id="room-title">Play a friend</h2>
+    <p class="sheet-lede">You each hide two aircraft for the other to find. Whoever finds both cockpits in fewer shots wins.</p>
+    <p class="field-hint room-offline" id="room-offline" hidden>Playing a friend needs the shared game server, which this copy of the site is not connected to.</p>
+
+    <div class="room-name" id="room-name-row">
+      <label for="room-name">Your name</label>
+      <input id="room-name" type="text" maxlength="20" placeholder="Guest" autocomplete="nickname" spellcheck="false">
+    </div>
+    <p class="room-signed-in" id="room-signed-in-as" hidden></p>
+
+    <section class="room-host" id="room-host" aria-labelledby="your-code-label">
+      <p class="room-label" id="your-code-label">Your code</p>
+      <div class="code-tiles" id="code-tiles" role="img"></div>
+      <div class="code-actions">
+        <button type="button" class="secondary" id="copy-code" disabled>Copy code</button>
+        <button type="button" class="secondary" id="copy-link" disabled>Copy invite link</button>
+      </div>
+      <p class="room-wait" id="room-wait" aria-live="polite"></p>
+    </section>
+    <button type="button" class="secondary make-own" id="make-own-room" hidden>Make my own room instead</button>
+
+    <div class="or-rule" aria-hidden="true"><span>or</span></div>
+
+    <form id="join-form" novalidate>
+      <p class="room-label" id="join-label">Enter a code to join a room</p>
+      <div class="code-inputs" role="group" aria-labelledby="join-label">
+        <input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="Letter 1">
+        <input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="Letter 2">
+        <input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="Letter 3">
+        <input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="Letter 4">
+      </div>
+      <p class="form-error" id="join-error" role="alert" hidden></p>
+      <button type="submit" class="primary" id="join-submit">Join room</button>
+    </form>
+  </dialog>
+
+  <script src="js/config.js?v=5"></script>
+  <script src="js/game.js?v=5"></script>
+  <script src="js/store.js?v=5"></script>
+  <script src="js/ui.js?v=5"></script>
+  <script src="js/account.js?v=5"></script>
+  <script src="js/match.js?v=5"></script>
 </body>
 </html>

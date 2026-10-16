@@ -1187,6 +1187,19 @@ body.in-match #open-room {
   font-size: 1.75rem;
 }
 
+.match-shapes {
+  margin-top: 0.5rem;
+}
+
+.match-shapes li {
+  min-width: 0;
+}
+
+.match-shapes .shape-name {
+  margin-top: 0.3rem;
+  font-size: 0.875rem;
+}
+
 .mini-title {
   margin: 1.5rem 0 0.5rem;
   color: var(--muted);

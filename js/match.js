@@ -905,7 +905,7 @@
     $('mini-title').textContent = 'Your grid, with ' + opp + "'s shots";
     if (me.done !== null) {
       statusEl.textContent =
-        'You found both cockpits in ' + me.done + ' shots. ' + opp + ' needs fewer than that to win.';
+        'You found both cockpits in ' + me.done + ' shots. Waiting for ' + opp + ' to finish: they need fewer than ' + me.done + ' to win.';
       recordScore(me.done);
     } else if (!shooting && !/^[A-J]\d+: /.test(statusEl.textContent)) {
       statusEl.textContent = 'Pick a square on ' + opp + "'s grid. Fewest shots to find both cockpits wins.";
@@ -975,8 +975,8 @@
     const theirs = s.opp.done !== null ? s.opp.done + ' shots' : 'not finished, ' + heads(s.opp.shots) + ' of 2 cockpits';
     const lines = {
       both_found: 'Both found both cockpits.',
-      found_first: (won ? 'You' : opp) + ' found both cockpits, and ' + (won ? opp : 'you') + ' could no longer do it in fewer shots.',
-      time: 'Five minutes ran out.',
+      found_first: (won ? 'You' : opp) + ' found both cockpits first.',
+      time: 'Five minutes ran out before both of you finished.',
       not_placed: draw
         ? 'Neither of you hid your aircraft in time.'
         : (won ? opp : 'You') + ' did not hide aircraft in time.',
@@ -1017,8 +1017,33 @@
 
   /* ---------- wiring ---------- */
 
+  /* A reminder of the three shapes while searching. */
+  function buildShapeReminder() {
+    const list = $('match-shapes');
+    G.SHAPES.forEach((shape) => {
+      const item = document.createElement('li');
+      const grid = document.createElement('div');
+      grid.className = 'shape-grid';
+      grid.setAttribute('role', 'img');
+      grid.setAttribute('aria-label', shape.name);
+      shape.cells.forEach((offset, i) => {
+        const square = document.createElement('i');
+        square.style.gridRow = String(offset[0] + 1);
+        square.style.gridColumn = String(offset[1] + 3);
+        if (i === 0) square.className = 'is-head';
+        grid.appendChild(square);
+      });
+      const name = document.createElement('span');
+      name.className = 'shape-name';
+      name.textContent = shape.name;
+      item.append(grid, name);
+      list.appendChild(item);
+    });
+  }
+
   buildBoard();
   buildHangar();
+  buildShapeReminder();
   wireCodeInputs();
   setTiles(null);
 

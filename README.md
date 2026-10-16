@@ -76,8 +76,8 @@ The red **Play a friend** button opens a room for two players. You don't need an
 1. **Get a code.** The popup shows your four-letter room code, with buttons to copy the code or an invite link. The room lasts three hours.
 2. **Or join one.** Type a friend's code into the four boxes, or open their invite link, which fills the code in for you.
 3. **Hide your aircraft (1 minute).** Drag two of the three shapes onto your own grid. Tap a placed aircraft to turn it, drag it to move it, or drag it off the grid to put it back. **Random** and **Clear** help, and **Confirm** locks you in. When time runs out, whatever is on your grid is locked in and any missing aircraft are placed at random.
-4. **Search (5 minutes).** You each get the other's covered grid. Normal light-mode rules apply: a shot shows miss, body or cockpit, and nothing else. A small copy of your own grid shows where your friend has shot.
-5. **Result.** Whoever finds both cockpits in fewer shots wins, and equal shots is a draw. The round ends early once the player still searching can no longer win. If time runs out, whoever finished wins; if neither did, more cockpits found wins. Both layouts are then revealed, and **Play again** starts a new round in the same room.
+4. **Search (5 minutes).** You each get the other's covered grid. Normal light-mode rules apply: a shot shows miss, body or cockpit, and nothing else. The three aircraft shapes stay on screen as a reminder, and a small copy of your own grid shows where your friend has shot.
+5. **Result.** Whoever finds both cockpits in fewer shots wins, and equal shots is a draw. The round keeps going until both of you have found both cockpits, even after one of you finishes. If time runs out, whoever finished wins; if neither did, more cockpits found wins. Both layouts are then revealed, and **Play again** starts a new round in the same room.
 
 Your shot count from a match counts towards your best score on the leaderboard, the same as a solo game.
 

@@ -6,7 +6,7 @@
 -- A room has a four-letter code and lasts three hours. Each round:
 --   1. both players hide two different aircraft on their own grid (60 s),
 --   2. each searches the other's grid (5 min),
---   3. whoever finds both cockpits in fewer shots wins.
+--   3. once both have found both cockpits (or time is up), fewer shots wins.
 --
 -- The rooms table, like players, has row level security with no policies, so
 -- the public key cannot read it. Hidden layouts never leave the database while
@@ -159,11 +159,9 @@ begin
 
   v_hs := jsonb_array_length(v.host_shots);
   v_gs := jsonb_array_length(v.guest_shots);
-  -- A player still searching who has already used as many shots as the
-  -- finished player cannot win, so the round can end early.
+  -- The round ends when both players have found both cockpits, or when
+  -- time runs out.
   if not ((v.host_done is not null and v.guest_done is not null)
-          or (v.host_done is not null and v_gs >= v.host_done)
-          or (v.guest_done is not null and v_hs >= v.guest_done)
           or now() > v.play_deadline) then
     return;
   end if;
